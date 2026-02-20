@@ -1,0 +1,23 @@
+# Maven build output
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Local secrets — NEVER commit real credentials
+src/main/resources/application-local.properties
+
+# IDE
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+*.class
+
+# Secrets — DO NOT COMMIT (use environment variables in prod)
+# application.properties is kept for dev — remove DB password before sharing!
+
+# OS
+.DS_Store
+Thumbs.db
