@@ -1,9 +1,15 @@
 import axios from 'axios';
 
-// All requests go to Vite dev server → proxied to Spring Boot :8080
+// In development: Vite proxy forwards /api → http://localhost:8080
+// In production (Vercel): VITE_API_URL must be set to your deployed backend URL
+//   e.g. https://your-backend.railway.app
+const BASE_URL = import.meta.env.VITE_API_URL
+    ? `${import.meta.env.VITE_API_URL}/api`
+    : '/api';          // dev fallback — handled by Vite proxy
+
 const api = axios.create({
-    baseURL: '/api',
-    withCredentials: true,   // ← sends the HttpOnly JWT cookie automatically
+    baseURL: BASE_URL,
+    withCredentials: true,   // send HttpOnly JWT cookie automatically
     headers: {
         'Content-Type': 'application/json',
     },

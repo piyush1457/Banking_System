@@ -1,5 +1,6 @@
 package com.kodbank.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -12,56 +13,47 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+    // Set ALLOWED_ORIGINS env var to allow Vercel URL:
+    // e.g. "http://localhost:5173,https://banking-system.vercel.app"
+    @Value("${allowed.origins:http://localhost:5173}")
+    private String allowedOrigins;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // Disable CSRF — stateless JWT-based API
                 .csrf(csrf -> csrf.disable())
-
-                // CORS — allow frontend on port 5173
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                // Stateless session — no server-side sessions
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                // Permit all requests — JWT validation is done manually in controllers
-                .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll())
-
-                // Disable default form login and HTTP basic
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable());
 
         return http.build();
     }
 
-    /**
-     * CORS config — allows React frontend (localhost:5173) to call the backend
-     * with credentials (cookies).
-     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+
+        // Support comma-separated list of origins (localhost + Vercel URL)
+        List<String> origins = Arrays.asList(allowedOrigins.split(","));
+        config.setAllowedOrigins(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true); // Required for cookies to be sent cross-origin
+        config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
     }
 
-    /**
-     * BCrypt password encoder — used for hashing passwords during registration
-     * and verifying them during login.
-     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
